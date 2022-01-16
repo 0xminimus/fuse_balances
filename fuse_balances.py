@@ -10,7 +10,8 @@ import csv
 # https://www.coingecko.com/en/api/documentation
 
 BLOCK_URL = "https://explorer.fuse.io/api?module=block&action=getblocknobytime&timestamp=TIMESTAMP&closest=before"
-BALANCE_URL = "https://explorer.fuse.io/api/eth-rpc/"
+#BALANCE_URL = "https://explorer.fuse.io/api/eth-rpc/"
+BALANCE_URL = "https://explorer-node.fuse.io/"
 COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/fuse-network-token/market_chart/range?vs_currency=eur&from=DATE_FROM&to=DATE_TO"
 
 def get_args(argv):
@@ -55,62 +56,27 @@ def get_balance(address, block_number):
         "id":0,
         "jsonrpc":"2.0",
         "method": "eth_getBalance",
-        #"params": f"[{address}, {block_number}]"
-        "params": [address, block_number]
+        "params": [address, hex(int(block_number))]
     }
-    print(raw_data)
-    print(raw_data['params'])
-    print(type(raw_data['params']))
-    print(type(raw_data['params'][0]))
-    print(type(raw_data['params'][1]))
-    #data = urllib.parse.urlencode(raw_data).encode()
-    data = "id=0&jsonrpc=2.0&method=eth_getBalance&params=['0xBec4e80531DAD6a9989828d174Cc2878B1E3123D','13196630']"
 
-    #data = json.dumps(raw_data)
-    print(data)
-    print(type(data))
+    data = json.dumps(raw_data)
 
     # Convert to String
-    #data = str(data)
-    #print(data)
-    #print(type(data))
+    data = str(data)
 
     # Convert string to byte
     data = data.encode('utf-8')
-    print(data)
-    print(type(data))
 
-    #"""
-    req = urllib.request.Request(BALANCE_URL, data=data) # this will make the method "POST"
-    print(req)
-    #"""
+    req = urllib.request.Request(BALANCE_URL, data=data, headers={'Content-Type': 'application/json'}) # this will make the method "POST"
+    #print(req)
     response = urllib.request.urlopen(req)
     #print(response)
     data = response.read()
-    print(data)
+    #print(data)
     values = json.loads(data)
-    #print(type(values))
-    print(values)
-    #print(values['result']['blockNumber'])
-    #"""
+    #print(values)
 
-    return
-
-def get_balance2(address, block_number):
-    raw_data = {
-        "id":0,
-        "jsonrpc":"2.0",
-        "method": "eth_getBalance",
-        #"params": f"['{address}', '{block_number}']"
-        "params": [address, block_number]
-    }
-    print(raw_data)
-    print(json.dumps(raw_data))
-    import requests
-    x = requests.post(BALANCE_URL, data = raw_data)
-    #x = requests.post(BALANCE_URL, json = json.dumps(raw_data))
-    print(x.text)
-    return
+    return int(values['result'], 16) / 1e18
 
 def get_balance3(address, block_number):
     #curl_command = f"""curl -X POST --insecure -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_getBalance","params":["{address}","{block_number}"],"id":0}' https://explorer.fuse.io/api/eth-rpc"""
@@ -189,7 +155,7 @@ def  main(address, start_date, end_date):
     current_timestamp = start_timestamp
     while current_timestamp <= end_timestamp:
         block_number = get_block_number(current_timestamp)
-        fuse_balance = get_balance3(address, block_number)
+        fuse_balance = get_balance(address, block_number)
         #price = get_price(current_timestamp)
         new_index, price_timestamp, price = get_price_from_array(prices[index:], current_timestamp)
         index = index + new_index
